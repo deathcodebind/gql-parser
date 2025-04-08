@@ -170,7 +170,7 @@ static struct Schema
                     result = ctx.scalars[T.stringof];
                 } else {
                     static assert(isInputType!T && canFind(ctx.input_types.keys, T.stringof), 
-                    "if the outer type is a input object and the field type is not a scalar, then it should be a input object too");
+                    "if the outer type is a input and the field type is not a scalar, then it should be a input too");
                     result = ctx.inputs[T.stringof];
                 }
             }
@@ -186,6 +186,19 @@ static struct Schema
         }
         static if(isEnum!T) {
             result = ctx.enums[T.stringof];
+        }
+        return to!(char[])(result);
+    }
+    static char[] parseDocumentation(T)() {
+        string result;
+        enum doc = getUDAs!(T, document);
+        static if (doc.length == 1) {
+            enum doc_detail = doc[0].description;
+            enum doc_lines = split(doc_detail, "\n");
+            foreach(line; doc_lines) {
+                if(line == "") continue;
+                result ~= format("# %s\n", line);
+            }
         }
         return to!(char[])(result);
     }
@@ -211,20 +224,23 @@ static struct Schema
         }
         else
         {
+            string result;
+            result ~= parseDocumentation!T();
             static if ((is(T == class) || is(T == struct)) && !isScalar!T)
             {
-                return parseDClass!(ctx, T)();
+                result ~= parseDClass!(ctx, T)();
             }
             static if (isSumType!T)
             {
-                return parseSumTypeToGQLUnion!T();
+                result ~= parseSumTypeToGQLUnion!T();
             }
             static if (isScalar!T) {
-                return to!(char[])(format("scalar %s\n", ctx.scalars[T.stringof]));
+                result ~= format("scalar %s\n", ctx.scalars[T.stringof]);
             }
             static if (isEnum!T) {
-                return parseEnumToGQLEnum!T();
+                result ~= parseEnumToGQLEnum!T();
             }
+            return to!(char[])(result);
         }
     }
     static char[] parseEnumToGQLEnum(T)()
@@ -337,13 +353,15 @@ static struct Schema
         static foreach (i, param; params)
         {
             static assert(paramStorages[i] != STC.out_, "gql doesn't support out parameter in query or mutation");
-            result ~= format("%s: %s", paramNames[i], parseOption!(ctx, param, ParsePosition.FunctionParam, FunctionTypeOf!T));
+            result ~= format("%s: %s", paramNames[i], 
+            parseOption!(ctx, param, ParsePosition.FunctionParam, FunctionTypeOf!T));
             if (i != params.length - 1)
             {
                 result ~= ", ";
             }
         }
-        return to!(char[])(format("%s): %s\n", result, parseOption!(ctx, rt, ParsePosition.FunctionReturnType, FunctionTypeOf!T)));
+        return to!(char[])(format("%s): %s\n", result, 
+        parseOption!(ctx, rt, ParsePosition.FunctionReturnType, FunctionTypeOf!T)));
     }
 
     static char[] parseQueryOrMutation(ParserContext ctx, T, bool isQuery = true)()
@@ -433,7 +451,10 @@ unittest
 {
     import gql_parser.attributes;
 
-    @object_("ObjectA") class A
+    @object_("ObjectA") @document("
+This is the documentation of ObjectA.
+It can have multiple lines.
+") class A
     {
         int a;
         this()
@@ -451,7 +472,7 @@ unittest
         }
     }
 
-    @scalar_("CustomScalar____1") struct CustomScalar
+    @scalar_("CustomScalar_____1") struct CustomScalar
     {
         int c;
     }
@@ -482,6 +503,7 @@ unittest
             b ~= new B();
         }
     }
+    pragma(msg, Schema.parseSchema!(Query, Mutation, void, A, B, CustomEnum, CustomScalar)());
     // to ensure that all parsing is pure compile-time
     static assert(__traits(compiles, Schema.parseSchema!(Query, Mutation, void, A, B, CustomEnum, CustomScalar)()));
 

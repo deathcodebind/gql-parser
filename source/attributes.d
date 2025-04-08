@@ -24,6 +24,12 @@ struct enum_
 {
     string name;
 }
+/* this attibute is going to be used as a custom documentation
+* just some libs provided """ in a schema
+*/
+struct document {
+    string description;
+}
 
 
 
