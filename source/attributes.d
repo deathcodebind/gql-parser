@@ -15,6 +15,18 @@ struct interface_
     string name;
 }
 
+struct scalar_
+{
+    string name;
+}
+
+struct enum_
+{
+    string name;
+}
+
+
+
 enum AttributeType
 {
     Input,
