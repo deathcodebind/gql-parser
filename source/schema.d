@@ -211,7 +211,7 @@ static struct Schema
         }
         else
         {
-            static if ((is(T == class) || is(T == struct)))
+            static if ((is(T == class) || is(T == struct)) && !isScalar!T)
             {
                 return parseDClass!(ctx, T)();
             }
@@ -363,7 +363,8 @@ static struct Schema
         string customName;
         static if (it == IdentifierType.ENUM)
         {
-            customName = T.stringof;
+            enum enum_udas = getUDAs!(T, enum_);
+            customName = enum_udas[0].name;
         }
         static if (it == IdentifierType.OBJECT)
         {
@@ -450,11 +451,11 @@ unittest
         }
     }
 
-    @scalar_("CustomScalar") struct CustomScalar
+    @scalar_("CustomScalar____1") struct CustomScalar
     {
         int c;
     }
-    @enum_("CustomEnum") enum CustomEnum: string
+    @enum_("CustomEnum_____1") enum CustomEnum: string
     {
         A = "A",
         B = "B",
@@ -483,4 +484,5 @@ unittest
     }
     // to ensure that all parsing is pure compile-time
     static assert(__traits(compiles, Schema.parseSchema!(Query, Mutation, void, A, B, CustomEnum, CustomScalar)()));
+
 }
