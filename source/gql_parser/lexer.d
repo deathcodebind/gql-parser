@@ -2,9 +2,7 @@ module gql_parser.lexer;
 ///not ready to be used yet
 
 enum TokenType {
-    Query,
-    Mutation,
-    Subscription,
+    Keyword,
     Identifier,
     LBrace,
     RBrace,
@@ -16,9 +14,15 @@ enum TokenType {
     LQoute,
     RQoute,
     Value,
-    On,
-    Fragment,
     TripleDot,
+}
+
+enum KeywordType {
+    Query,
+    Mutation,
+    Subscription,
+    Fragment,
+    On,
 }
 
 struct Token {

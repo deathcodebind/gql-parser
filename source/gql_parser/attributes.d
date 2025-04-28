@@ -10,6 +10,11 @@ struct object_
     string name;
 }
 
+struct impls(T) {
+    alias Inner = T;
+    string interface_ = T.stringof;
+}
+
 struct interface_
 {
     string name;
