@@ -73,9 +73,10 @@
 	// }
 ## to-dos
 
- - [ ] more compile time things
-	 - [ ] using parseSchema(Query, Mutation, Subscription) only, all extra types is auto-added
-	 - [ ] gen Also gql documentation page, not just schema
+ - [x] more compile time things
+	 - [x] using parseSchema(Query, Mutation, Subscription) only, all extra types is auto-added
+	 - [x] support interface checker at compile time
+	 - [] gen Also gql documentation page, not just schema
 - [ ] used as a vibe.d plugin
 	- [ ] handler and controller for gql request that could be merged into Query type
 	- [ ] gql request to dlang function call

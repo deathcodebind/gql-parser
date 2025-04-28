@@ -185,11 +185,11 @@ GQLType isKnownType(Schema schema, T_)()
                 }  
             }
         }
-        // static if (isUnion!T) {
-        //     static if(canFind(schema.unions.keys, T.stringof)) {
-        //         return GQLType.UNION;
-        //     }
-        // }
+        static if (isUnion!T) {
+            static if(canFind(schema.unions.keys, T.stringof)) {
+                return GQLType.UNION;
+            }
+        }
         static if (isEnum!T) {
             static if(canFind(schema.enums.keys, T.stringof)) {
                 return GQLType.ENUM;
