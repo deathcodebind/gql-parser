@@ -83,5 +83,5 @@
 	- [ ] schema docs though vibe.d
 	- [ ] perfomance tests
 - [ ] gql value to dlang value
-- [ ] interface support
+- [x] interface support
 - [ ] directive support
