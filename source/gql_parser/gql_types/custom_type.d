@@ -63,14 +63,18 @@ mixin template CustomType()
     string comment = null;
 }
 
-template parseFieldsImpl(Field[] fields, int index) {
-    static if(index >= fields.length) {
+template parseFieldsImpl(Field[] fields, int index)
+{
+    static if (index >= fields.length)
+    {
         alias parseFieldsImpl = AliasSeq!();
-    } else {
+    }
+    else
+    {
         enum current = text(
-            fields[index].typeName, " ",
-            fields[index].name
-        );
+                fields[index].typeName, " ",
+                fields[index].name
+            );
         alias parseFieldsImpl = AliasSeq!(current, parseFieldsImpl!(fields, index + 1));
     }
 }
@@ -104,11 +108,11 @@ string parseInput(Input input)()
 
 template parseInputs(Input[] inputs, int index = 0)
 {
-    static if(index >= inputs.length)
+    static if (index >= inputs.length)
     {
         alias parseInputs = AliasSeq!();
     }
-    else 
+    else
     {
         enum parseInputs = text(parseInput!(inputs[index]), "\n", parseInputs!(inputs, index + 1));
     }
@@ -116,9 +120,11 @@ template parseInputs(Input[] inputs, int index = 0)
 
 unittest
 {
-    @input("3A") class AAA {
+    @input("3A") class AAA
+    {
         int a;
     }
+
     enum schema = Schema();
     enum schema_ = inputTypeFromDtype!(schema, AAA);
     enum parsed = parseInput!(schema_.inputs[AAA.stringof]);
@@ -128,9 +134,11 @@ unittest
 
 unittest
 {
-    @input("3A") @document("comment") class AAA {
+    @input("3A") @document("comment") class AAA
+    {
         int a;
     }
+
     enum schema = Schema();
     enum schema_ = inputTypeFromDtype!(schema, AAA);
     enum parsed = parseInput!(schema_.inputs[AAA.stringof]);
@@ -144,27 +152,60 @@ struct Interface_
     mixin CustomType;
 }
 
-string parseInterface(Interface_ interface_)() {
+template parseImplements(Interface_[] interfaces, int index = 0)
+{
+    static if (index == interfaces.length - 1)
+    {
+        enum parseImplements = interfaces[index].name;
+    } else {
+        enum parseImplements = text(
+            interfaces[index].name,
+            ", ",
+            parseImplements!(interfaces, index + 1)
+        );
+    }
+    
+}
+
+string parseInterface(Interface_ interface_)()
+{
     enum fields_parsed = parseFields!(interface_.fields);
     static if (interface_.comment == null)
     {
-        return format("interface %s{\n    %s\n}", interface_.name, fields_parsed);
+        static if (interface_.interfaces == null || interface_.interfaces.length == 0)
+        {
+            return format("interface %s{\n    %s\n}", interface_.name, fields_parsed);
+        }
+        else
+        {
+            return format("interface %s implements %s{\n    %s\n}",
+                interface_.name, parseImplements!(interface_.interfaces), fields_parsed);
+        }
     }
     else
     {
-        return format("%s\ninterface %s{
+        static if (interface_.interfaces == null || interface_.interfaces.length == 0)
+        {
+            return format("%s\ninterface %s{
     %s
 }", interface_.comment, interface_.name, fields_parsed);
+        }
+        else
+        {
+            return format("%s\ninterface %s implements %s{
+    %s
+}", interface_.comment, interface_.name, parseImplements!(interface_.interfaces), fields_parsed);
+        }
     }
 }
 
 template parseInterfaces(Interface_[] interfaces, int index = 0)
 {
-    static if(index >= interfaces.length)
+    static if (index >= interfaces.length)
     {
         alias parseInterfaces = AliasSeq!();
     }
-    else 
+    else
     {
         enum parseInterfaces = text(parseInterface!(interfaces[index]), "\n", parseInterfaces!(interfaces, index + 1));
     }
@@ -172,9 +213,11 @@ template parseInterfaces(Interface_[] interfaces, int index = 0)
 
 unittest
 {
-    @interface_("3A") @document("comment") class AAA {
+    @interface_("3A") @document("comment") class AAA
+    {
         int a;
     }
+
     enum schema = Schema();
     enum schema_ = interfaceFromDType!(schema, AAA);
     enum parsed = parseInterface!(schema_.interfaces[AAA.stringof]);
@@ -188,27 +231,46 @@ struct Object_
     mixin CustomType;
 }
 
-string parseObject(Object_ object_)() {
+string parseObject(Object_ object_)()
+{
     enum fields_parsed = parseFields!(object_.fields);
     static if (object_.comment == null)
     {
-        return format("type %s{\n    %s\n}", object_.name, fields_parsed);
+        static if (object_.interfaces == null || object_.interfaces.length == 0)
+        {
+            return format("type %s{\n    %s\n}", object_.name, fields_parsed);
+        }
+        else
+        {
+            pragma(msg, "make sure goes here");
+            return format("type %s implements %s{\n    %s\n}",
+                object_.name, parseImplements!(object_.interfaces), fields_parsed);
+        }
     }
     else
     {
-        return format("%s\ntype %s{
+        static if (object_.interfaces == null || object_.interfaces.length == 0)
+        {
+            return format("%s\ntype %s{
     %s
 }", object_.comment, object_.name, fields_parsed);
+        }
+        else
+        {
+            return format("%s\ntype %s implements %s{
+    %s
+}", object_.comment, object_.name, parseImplements!(object_.interfaces), fields_parsed);
+        }
     }
 }
 
 template parseObjects(Object_[] objects, int index = 0)
 {
-    static if(index >= objects.length)
+    static if (index >= objects.length)
     {
         alias parseObjects = AliasSeq!();
     }
-    else 
+    else
     {
         enum parseObjects = text(parseObject!(objects[index]), "\n", parseObjects!(objects, index + 1));
     }
@@ -216,9 +278,11 @@ template parseObjects(Object_[] objects, int index = 0)
 
 unittest
 {
-    @object_("3A") @document("comment") class AAA {
+    @object_("3A") @document("comment") class AAA
+    {
         int a;
     }
+
     enum schema = Schema();
     enum schema_ = objectFromDType!(schema, AAA);
     enum parsed = parseObject!(schema_.types[AAA.stringof]);
@@ -245,9 +309,12 @@ template getAllUnknowTypes(Schema schema, T, int index = 0)
 {
     alias fields_ = Fields!T;
     alias fieldNames = FieldNameTuple!T;
-    static if (index >= fieldNames.length) {
+    static if (index >= fieldNames.length)
+    {
         alias getAllUnknowTypes = AliasSeq!();
-    } else {
+    }
+    else
+    {
         static if (isKnownType!(schema, fields_[index]) != GQLType.UNKNOWN)
         {
             alias getAllUnknowTypes = AliasSeq!(getAllUnknowTypes!(schema, T, index + 1));
@@ -258,7 +325,6 @@ template getAllUnknowTypes(Schema schema, T, int index = 0)
         }
     }
 }
-
 
 unittest
 {
@@ -288,13 +354,15 @@ template registerAllUnknowTypes(Schema schema, T, int index = 0)
     alias fields_ = Fields!T;
     enum fieldNames = FieldNameTuple!T;
     enum unknowns = getAllUnknowTypes!(schema, T);
-    static if(index >= unknowns.length)
+    static if (index >= unknowns.length)
     {
         alias registerAllUnknowTypes = schema;
-    } else {
+    }
+    else
+    {
         enum unknowns_index = unknowns[index];
         alias unknownType = fields_[unknowns_index];
-        alias registerAllUnknowTypes = 
+        alias registerAllUnknowTypes =
             registerAllUnknowTypes!(registerNewType!(schema, unknownType), T, index + 1);
     }
 }
@@ -321,10 +389,12 @@ template genFields(Schema schema, T, int index = 0)
 {
     alias fields_ = Fields!T;
     alias fieldNames = FieldNameTuple!T;
-    static if(index >= fields_.length)
+    static if (index >= fields_.length)
     {
         alias genFields = AliasSeq!();
-    } else {
+    }
+    else
+    {
         enum isOptional = isOption!(fields_[index]);
         enum field = Field(fieldNames[index], getTypeName!(schema, fields_[index]), isOptional);
         alias genFields = AliasSeq!(field, genFields!(schema, T, index + 1));
@@ -373,8 +443,8 @@ Schema inputTypeFromDtype(Schema schema, T)()
     {
         enum schemaTypeFixed = schema;
     }
-    return newSchemaWith(schemaTypeFixed, 
-        AppendAssocArray!Input.impl!(schemaTypeFixed.inputs, T.stringof,inputWithoutUnknownType!(
+    return newSchemaWith(schemaTypeFixed,
+        AppendAssocArray!Input.impl!(schemaTypeFixed.inputs, T.stringof, inputWithoutUnknownType!(
             schemaTypeFixed, T, input_udas[0].name == "" ? T.stringof : input_udas[0].name)));
     // return newSchemaWith(schemaTypeFixed,
     //     assocArray(zip((schemaTypeFixed.inputs.keys == null ? [] : schemaTypeFixed.inputs.keys) ~ T.stringof,
@@ -398,35 +468,56 @@ unittest
 Schema interfacesFromDType(Schema schema, T, int index = 0)()
 {
     enum interface_udas = getUDAs!(T, impls);
-    static if(index >= interface_udas.length) {
+    static if (index >= interface_udas.length)
+    {
         return schema;
-    } else {
-        static if(!canFind(schema.interfaces.keys, interface_udas[index].Inner.stringof)) {
+    }
+    else
+    {
+        static if (!canFind(schema.interfaces.keys, interface_udas[index].Inner.stringof))
+        {
             enum newSchema = registerNewType!(schema, interface_udas[index].Inner);
-        } else {
+        }
+        else
+        {
             enum newSchema = schema;
         }
         return interfacesFromDType!(newSchema, T, index + 1);
     }
 }
+
 template getInterfacesImpl(Schema schema, T, int index = 0)
 {
     enum interface_udas = getUDAs!(T, impls);
-    static if(index >= interface_udas.length) {
+    static if (index >= interface_udas.length)
+    {
         alias getInterfacesImpl = AliasSeq!();
-    } else {
-        static if(!canFind(schema.interfaces.keys, interface_udas[index].Inner.stringof)) {
+    }
+    else
+    {
+        static if (canFind(schema.interfaces.keys, interface_udas[index].Inner.stringof))
+        {
             alias getInterfacesImpl = AliasSeq!(interface_udas[index].Inner, getInterfacesImpl!(schema, T, index + 1));
-        } else {
+        }
+        else
+        {
             alias getInterfacesImpl = AliasSeq!(getInterfacesImpl!(schema, T, index + 1));
         }
     }
 }
 
-Interface_[] getInterfaces(Schema schema, T)()
+template getInterfaces(Schema schema, T, int index = 0)
 {
     alias interfaces = getInterfacesImpl!(schema, T);
-    return [interfaces];
+    static if (index >= interfaces.length)
+    {
+        alias getInterfaces = AliasSeq!();
+    }
+    else
+    {
+        enum interfaceName = interfaces[index].stringof;
+        alias getInterfaces = AliasSeq!(schema.interfaces[interfaceName], getInterfaces!(schema, T, index + 1));
+    }
 }
 
 Interface_ interfaceWithoutUnknownType(Schema schema, T)()
@@ -439,12 +530,17 @@ Interface_ interfaceWithoutUnknownType(Schema schema, T)()
     alias fields_ = Fields!T;
     alias fieldNames = FieldNameTuple!T;
     enum name_udas = getUDAs!(T, interface_);
-    static if(name_udas.length == 1) {
+    static if (name_udas.length == 1)
+    {
         enum name = name_udas[0].name == "" ? T.stringof : name_udas[0].name;
-    } else {
+    }
+    else
+    {
         enum name = T.stringof;
     }
-    Interface_ result = Interface_(getInterfaces!(schema, T), name, [genFields!(schema, T)], handleDocument!T);
+    Interface_ result = Interface_([getInterfaces!(schema, T)], name, [
+            genFields!(schema, T)
+        ], handleDocument!T);
     return result;
 }
 
@@ -462,12 +558,17 @@ Schema interfaceFromDType(Schema schema, T)()
         enum schemaTypeFixed = schema;
     }
     enum schemaAllFixed = interfacesFromDType!(schemaTypeFixed, T);
-    static if(schemaAllFixed.interfaces.length > 0) {
+    static if (schemaAllFixed.interfaces.length > 0)
+    {
         return newSchemaWith(schemaAllFixed,
             AppendAssocArray!Interface_.impl!(
                 schemaAllFixed.interfaces, T.stringof, interfaceWithoutUnknownType!(schemaAllFixed, T)));
-    } else {
-        return newSchemaWith(schemaAllFixed, [T.stringof: interfaceWithoutUnknownType!(schemaAllFixed, T)]);
+    }
+    else
+    {
+        return newSchemaWith(schemaAllFixed, [
+                T.stringof: interfaceWithoutUnknownType!(schemaAllFixed, T)
+            ]);
     }
 }
 
@@ -494,7 +595,9 @@ Object_ objectWithoutUnknownType(Schema schema, T)()
     enum object_udas = getUDAs!(T, object_);
     alias fields_ = Fields!T;
     alias fieldNames = FieldNameTuple!T;
-    Object_ result = Object_(getInterfaces!(schema, T), object_udas[0].name, [genFields!(schema, T)], handleDocument!T);
+    Object_ result = Object_([getInterfaces!(schema, T)], object_udas[0].name, [
+            genFields!(schema, T)
+        ], handleDocument!T);
     return result;
 }
 
@@ -510,12 +613,17 @@ Schema objectFromDType(Schema schema, T)()
         enum schemaTypeFixed = schema;
     }
     enum schemaAllFixed = interfacesFromDType!(schemaTypeFixed, T);
-    static if(schemaAllFixed.types.length > 0) {
+    static if (schemaAllFixed.types.length > 0)
+    {
         return newSchemaWith(schemaAllFixed,
             AppendAssocArray!Object_.impl!(
                 schemaAllFixed.types, T.stringof, objectWithoutUnknownType!(schemaAllFixed, T)));
-    } else {
-        return newSchemaWith(schemaAllFixed, [T.stringof: objectWithoutUnknownType!(schemaAllFixed, T)]);
+    }
+    else
+    {
+        return newSchemaWith(schemaAllFixed, [
+                T.stringof: objectWithoutUnknownType!(schemaAllFixed, T)
+            ]);
     }
 }
 

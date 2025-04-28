@@ -337,10 +337,19 @@ unittest
 unittest
 {
     import gql_parser.attributes;
+    @interface_("InterfaceAA") @document("
+This is the documentation of ObjectA.
+It can have multiple lines.") class AA
+    {
+        int a;
+        this()
+        {
+            a = 0;
+        }
+    }
     @object_("ObjectA") @document("
 This is the documentation of ObjectA.
-It can have multiple lines.
-") class A
+It can have multiple lines.") @impls!AA()class A
     {
         int a;
         this()
@@ -403,5 +412,6 @@ It can have multiple lines.
     static assert(schemaWithScalar.types.length == 1);
     static assert(schemaWithScalar.scalars.length == 1);
     static assert(schemaWithScalar.inputs.length == 1);
+    pragma(msg, schemaWithScalar.types["A"].interfaces);
     pragma(msg, parseSchema!(schemaWithScalar));
 }
