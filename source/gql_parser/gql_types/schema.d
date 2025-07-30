@@ -413,5 +413,5 @@ It can have multiple lines.") @impls!AA()class A
     static assert(schemaWithScalar.scalars.length == 1);
     static assert(schemaWithScalar.inputs.length == 1);
     pragma(msg, schemaWithScalar.types["A"].interfaces);
-    pragma(msg, parseSchema!(schemaWithScalar));
+    pragma(msg, "schema: \n" ~ parseSchema!(schemaWithScalar));
 }

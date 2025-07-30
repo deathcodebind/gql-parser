@@ -94,7 +94,7 @@ Schema requestFromOneMemberFunction(Schema schema, Parent, string funcName, bool
     return newSchemaWith!isQuery(
         schemaFinal, 
         AppendAssocArray!Request.impl!(
-            schemaFinal.query, rt.stringof, 
+            isQuery? schemaFinal.query: schemaFinal.mutation, rt.stringof, 
             Request(funcName, [paramsArr], returnTypeName, isOptional_rt, handleDocument!T)));
 }
 
