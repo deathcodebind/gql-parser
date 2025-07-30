@@ -108,7 +108,7 @@ template requestsFromAClass(Schema schema, T, bool queryOrMutation = true, int i
     static if(index >= funcs.length) {
         alias requestsFromAClass = schema;
     } else {
-        enum newSchema = requestFromOneMemberFunction!(schema, T, funcs[index]);
+        enum newSchema = requestFromOneMemberFunction!(schema, T, funcs[index], queryOrMutation);
         alias requestsFromAClass = requestsFromAClass!(newSchema, T, queryOrMutation, index + 1);
     }
 }

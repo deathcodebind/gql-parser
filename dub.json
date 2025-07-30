@@ -9,5 +9,6 @@
 	"description": "a gql parser that focus on compile time schema generating, and parse just raw dlang class to gql type.",
 	"license": "AGPL-3.0-or-later",
 	"name": "gql-parser",
-	"targetType": "library"
+	"targetType": "library",
+	"registryUrls": ["https://github.com/deathcodebind/gql-parser"]
 }
